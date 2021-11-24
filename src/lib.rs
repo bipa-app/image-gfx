@@ -1,4 +1,6 @@
-use image::{GenericImage, GenericImageView};
+use std::marker::PhantomData;
+
+use image::{GenericImage, GenericImageView, Rgba, RgbaImage};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Rect {
@@ -59,24 +61,48 @@ impl Circle {
     }
 }
 
-pub struct Renderer;
+pub trait Renderer {
+    type Image;
+    type Pixel;
 
-impl Default for Renderer {
+    fn draw_line(
+        &self,
+        img: &mut Self::Image,
+        from: (u32, u32),
+        to: (u32, u32),
+        color: Self::Pixel,
+    );
+
+    fn draw_rect(&self, img: &mut Self::Image, rect: Rect, color: Self::Pixel);
+    fn draw_filled_rect(&self, img: &mut Self::Image, rect: Rect, color: Self::Pixel);
+
+    fn draw_circle(&self, img: &mut Self::Image, circle: Circle, color: Self::Pixel);
+    fn draw_filled_circle(&self, img: &mut Self::Image, circle: Circle, color: Self::Pixel);
+}
+
+pub struct BasicRenderer<I> {
+    _phantom_data: PhantomData<I>,
+}
+
+impl<I> Default for BasicRenderer<I> {
     fn default() -> Self {
-        Self
+        Self {
+            _phantom_data: PhantomData::default(),
+        }
     }
 }
 
-impl Renderer {
-    pub fn draw_line<I>(
+impl<I: GenericImage> Renderer for BasicRenderer<I> {
+    type Image = I;
+    type Pixel = <I as GenericImageView>::Pixel;
+
+    fn draw_line(
         &self,
-        img: &mut I,
+        img: &mut Self::Image,
         from: (u32, u32),
         to: (u32, u32),
-        color: <I as GenericImageView>::Pixel,
-    ) where
-        I: GenericImage,
-    {
+        color: Self::Pixel,
+    ) {
         let (x0, y0) = from;
         let (x1, y1) = to;
         let (dx, dy) = (
@@ -110,10 +136,7 @@ impl Renderer {
         }
     }
 
-    pub fn draw_rect<I>(&self, img: &mut I, rect: Rect, color: <I as GenericImageView>::Pixel)
-    where
-        I: GenericImage,
-    {
+    fn draw_rect(&self, img: &mut Self::Image, rect: Rect, color: Self::Pixel) {
         for x in rect.left()..=rect.right() {
             img.put_pixel(x, rect.top(), color);
             img.put_pixel(x, rect.bottom(), color);
@@ -125,14 +148,7 @@ impl Renderer {
         }
     }
 
-    pub fn draw_filled_rect<I>(
-        &self,
-        img: &mut I,
-        rect: Rect,
-        color: <I as GenericImageView>::Pixel,
-    ) where
-        I: GenericImage,
-    {
+    fn draw_filled_rect(&self, img: &mut Self::Image, rect: Rect, color: Self::Pixel) {
         for x in rect.left()..=rect.right() {
             for y in rect.top()..=rect.bottom() {
                 img.put_pixel(x, y, color);
@@ -140,10 +156,7 @@ impl Renderer {
         }
     }
 
-    pub fn draw_circle<I>(&self, img: &mut I, circle: Circle, color: <I as GenericImageView>::Pixel)
-    where
-        I: GenericImage,
-    {
+    fn draw_circle(&self, img: &mut Self::Image, circle: Circle, color: Self::Pixel) {
         let radius = circle.radius();
         if radius == 0 {
             return;
@@ -176,14 +189,7 @@ impl Renderer {
         }
     }
 
-    pub fn draw_filled_circle<I>(
-        &self,
-        img: &mut I,
-        circle: Circle,
-        color: <I as GenericImageView>::Pixel,
-    ) where
-        I: GenericImage,
-    {
+    fn draw_filled_circle(&self, img: &mut Self::Image, circle: Circle, color: Self::Pixel) {
         let r = circle.radius();
         if r == 0 {
             return;
@@ -227,6 +233,40 @@ impl Renderer {
     }
 }
 
+pub struct AntiAliasingRender<I> {
+    _phantom_data: PhantomData<I>,
+}
+
+impl<I> Default for AntiAliasingRender<I> {
+    fn default() -> Self {
+        Self {
+            _phantom_data: PhantomData::default(),
+        }
+    }
+}
+
+impl<I: GenericImage> Renderer for AntiAliasingRender<I> {
+    type Image = I;
+    type Pixel = <I as GenericImageView>::Pixel;
+
+    fn draw_line(
+        &self,
+        img: &mut Self::Image,
+        from: (u32, u32),
+        to: (u32, u32),
+        color: Self::Pixel,
+    ) {
+    }
+
+    fn draw_rect(&self, img: &mut Self::Image, rect: Rect, color: Self::Pixel) {}
+
+    fn draw_filled_rect(&self, img: &mut Self::Image, rect: Rect, color: Self::Pixel) {}
+
+    fn draw_circle(&self, img: &mut Self::Image, circle: Circle, color: Self::Pixel) {}
+
+    fn draw_filled_circle(&self, img: &mut Self::Image, circle: Circle, color: Self::Pixel) {}
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -235,7 +275,7 @@ mod tests {
     fn it_works() {
         let mut img = image::RgbaImage::from_pixel(100, 100, image::Rgba([255, 255, 255, 255]));
 
-        let r = Renderer::default();
+        let r = BasicRenderer::default();
 
         r.draw_line(&mut img, (90, 70), (90, 80), image::Rgba([0, 0, 255, 255]));
         r.draw_line(&mut img, (90, 70), (80, 60), image::Rgba([0, 0, 255, 255]));
