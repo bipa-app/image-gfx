@@ -1,8 +1,10 @@
-use types::{Angle, Circle, Rect};
-
 mod antialiased;
 mod basic;
 mod types;
+
+pub use antialiased::*;
+pub use basic::*;
+pub use types::*;
 
 pub trait Renderer {
     type Image;
