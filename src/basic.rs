@@ -19,16 +19,14 @@ impl<I> Default for BasicRenderer<I> {
     }
 }
 
-impl<I: GenericImage> Renderer for BasicRenderer<I> {
-    type Image = I;
-    type Pixel = <I as GenericImageView>::Pixel;
-
-    fn draw_line(
+impl<I: GenericImage> BasicRenderer<I> {
+    pub(crate) fn filtered_draw_line<F: Fn(u32, u32) -> bool>(
         &self,
-        img: &mut Self::Image,
+        img: &mut I,
         from: (u32, u32),
         to: (u32, u32),
-        color: Self::Pixel,
+        color: <I as GenericImageView>::Pixel,
+        filter: F,
     ) {
         let (x0, y0) = from;
         let (x1, y1) = to;
@@ -43,7 +41,9 @@ impl<I: GenericImage> Renderer for BasicRenderer<I> {
         let (mut x, mut y) = (x0 as i64, y0 as i64);
 
         loop {
-            img.blend_pixel(x as u32, y as u32, color);
+            if filter(x as u32, y as u32) {
+                img.blend_pixel(x as u32, y as u32, color);
+            }
 
             if x as u32 == x1 && y as u32 == y1 {
                 break;
@@ -61,6 +61,21 @@ impl<I: GenericImage> Renderer for BasicRenderer<I> {
                 y += sy;
             }
         }
+    }
+}
+
+impl<I: GenericImage> Renderer for BasicRenderer<I> {
+    type Image = I;
+    type Pixel = <I as GenericImageView>::Pixel;
+
+    fn draw_line(
+        &self,
+        img: &mut Self::Image,
+        from: (u32, u32),
+        to: (u32, u32),
+        color: Self::Pixel,
+    ) {
+        self.filtered_draw_line(img, from, to, color, |_, _| true);
     }
 
     fn draw_rect(&self, img: &mut Self::Image, rect: Rect, color: Self::Pixel) {
@@ -182,13 +197,13 @@ impl<I: GenericImage> Renderer for BasicRenderer<I> {
         while start.to_degrees() < 0f64 {
             start = Angle::Degrees(start.to_degrees() + 360f64);
         }
-        while start.to_degrees() >= 360f64 {
+        while start.to_degrees() > 360f64 {
             start = Angle::Degrees(start.to_degrees() - 360f64);
         }
         while end.to_degrees() < 0f64 {
             end = Angle::Degrees(end.to_degrees() + 360f64);
         }
-        while end.to_degrees() >= 360f64 {
+        while end.to_degrees() > 360f64 {
             end = Angle::Degrees(end.to_degrees() - 360f64);
         }
 
@@ -245,6 +260,104 @@ impl<I: GenericImage> Renderer for BasicRenderer<I> {
             let a8 = if a8 < 0f64 { a8 + 360f64 } else { a8 };
             if a8 >= start.to_degrees() && a8 <= end.to_degrees() {
                 img.blend_pixel(x0 + x, y0 - y, color);
+            }
+
+            x += 1;
+            if p < 0 {
+                p += 2 * x as i64 + 1;
+            } else {
+                y -= 1;
+                p += 2 * (x as i64 - y as i64) + 1;
+            }
+        }
+    }
+
+    fn draw_filled_arc(
+        &self,
+        img: &mut Self::Image,
+        circle: Circle,
+        mut start: Angle,
+        mut end: Angle,
+        color: Self::Pixel,
+    ) {
+        let radius = circle.radius();
+        if radius == 0 {
+            return;
+        }
+
+        let center = circle.center();
+        let (x0, y0) = center;
+
+        let mut x = 0;
+        let mut y = radius;
+        let mut p = 1 - radius as i64;
+
+        while start.to_degrees() < 0f64 {
+            start = Angle::Degrees(start.to_degrees() + 360f64);
+        }
+        while start.to_degrees() > 360f64 {
+            start = Angle::Degrees(start.to_degrees() - 360f64);
+        }
+        while end.to_degrees() < 0f64 {
+            end = Angle::Degrees(end.to_degrees() + 360f64);
+        }
+        while end.to_degrees() > 360f64 {
+            end = Angle::Degrees(end.to_degrees() - 360f64);
+        }
+
+        let (start, end) = if start.to_degrees() > end.to_degrees() {
+            (end, start)
+        } else {
+            (start, end)
+        };
+
+        let filter_fn = |x, y| {
+            let a1 = (y as f64 - y0 as f64)
+                .atan2(x as f64 - x0 as f64)
+                .to_degrees();
+            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
+
+            a1 >= start.to_degrees() && a1 <= end.to_degrees()
+        };
+
+        img.blend_pixel(x0, y0, color);
+
+        self.filtered_draw_line(img, (x0 - radius, y0), (x0 + radius, y0), color, filter_fn);
+        self.filtered_draw_line(img, (x0, y0 - radius), (x0, y0 + radius), color, filter_fn);
+
+        while x <= y {
+            if x0 >= x {
+                self.filtered_draw_line(img, (x0 - x, y0 + y), (x0 + x, y0 + y), color, filter_fn);
+            }
+
+            if x0 >= y {
+                self.filtered_draw_line(
+                    img,
+                    ((x0 - y), (y0 + x)),
+                    ((x0 + y), (y0 + x)),
+                    color,
+                    filter_fn,
+                );
+            }
+
+            if x0 >= x && y0 >= y {
+                self.filtered_draw_line(
+                    img,
+                    ((x0 - x), (y0 - y)),
+                    ((x0 + x), (y0 - y)),
+                    color,
+                    filter_fn,
+                );
+            }
+
+            if x0 >= y && y0 >= x {
+                self.filtered_draw_line(
+                    img,
+                    ((x0 - y), (y0 - x)),
+                    ((x0 + y), (y0 - x)),
+                    color,
+                    filter_fn,
+                );
             }
 
             x += 1;

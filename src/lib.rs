@@ -30,6 +30,14 @@ pub trait Renderer {
         end: Angle,
         color: Self::Pixel,
     );
+    fn draw_filled_arc(
+        &self,
+        img: &mut Self::Image,
+        circle: Circle,
+        start: Angle,
+        end: Angle,
+        color: Self::Pixel,
+    );
 }
 
 #[cfg(test)]
@@ -116,9 +124,43 @@ mod tests {
             &mut img,
             Circle::new((10, 50), 5),
             Angle::Degrees(270f64),
+            Angle::Degrees(359.9f64),
+            image::Rgba([255, 0, 255, 255]),
+        );
+
+        aar.draw_filled_arc(
+            &mut img,
+            Circle::new((10, 80), 10),
+            Angle::Degrees(0f64),
+            Angle::Degrees(90f64),
+            image::Rgba([0, 255, 0, 255]),
+        );
+        aar.draw_filled_arc(
+            &mut img,
+            Circle::new((10, 80), 10),
+            Angle::Degrees(90f64),
+            Angle::Degrees(180f64),
+            image::Rgba([0, 0, 255, 255]),
+        );
+        aar.draw_filled_arc(
+            &mut img,
+            Circle::new((10, 80), 10),
+            Angle::Degrees(180f64),
+            Angle::Degrees(270f64),
+            image::Rgba([255, 0, 0, 255]),
+        );
+        aar.draw_filled_arc(
+            &mut img,
+            Circle::new((10, 80), 10),
+            Angle::Degrees(270f64),
             Angle::Degrees(359.9999f64),
             image::Rgba([255, 0, 255, 255]),
         );
+        // r.draw_circle(
+        //     &mut img,
+        //     Circle::new((10, 80), 10),
+        //     image::Rgba([0, 0, 0, 255]),
+        // );
 
         img.save("./test.png").unwrap();
     }
