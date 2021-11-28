@@ -369,4 +369,164 @@ impl<I: GenericImage> Renderer for BasicRenderer<I> {
             }
         }
     }
+
+    fn draw_rounded_rect(
+        &self,
+        img: &mut Self::Image,
+        rect: Rect,
+        corner_radius: u32,
+        color: Self::Pixel,
+    ) {
+        self.draw_line(
+            img,
+            (rect.left(), rect.top() + corner_radius),
+            (rect.left(), rect.bottom() - corner_radius),
+            color,
+        );
+        self.draw_arc(
+            img,
+            Circle::new(
+                (rect.left() + corner_radius, rect.top() + corner_radius),
+                corner_radius,
+            ),
+            Angle::Degrees(180f64),
+            Angle::Degrees(270f64),
+            color,
+        );
+        self.draw_arc(
+            img,
+            Circle::new(
+                (rect.left() + corner_radius, rect.bottom() - corner_radius),
+                corner_radius,
+            ),
+            Angle::Degrees(90f64),
+            Angle::Degrees(180f64),
+            color,
+        );
+
+        self.draw_line(
+            img,
+            (rect.right(), rect.top() + corner_radius),
+            (rect.right(), rect.bottom() - corner_radius),
+            color,
+        );
+        self.draw_arc(
+            img,
+            Circle::new(
+                (rect.right() - corner_radius, rect.top() + corner_radius),
+                corner_radius,
+            ),
+            Angle::Degrees(270f64),
+            Angle::Degrees(360f64),
+            color,
+        );
+        self.draw_arc(
+            img,
+            Circle::new(
+                (rect.right() - corner_radius, rect.bottom() - corner_radius),
+                corner_radius,
+            ),
+            Angle::Degrees(0f64),
+            Angle::Degrees(90f64),
+            color,
+        );
+
+        self.draw_line(
+            img,
+            (rect.left() + corner_radius, rect.top()),
+            (rect.right() - corner_radius, rect.top()),
+            color,
+        );
+        self.draw_line(
+            img,
+            (rect.left() + corner_radius, rect.bottom()),
+            (rect.right() - corner_radius, rect.bottom()),
+            color,
+        );
+    }
+
+    fn draw_filled_rounded_rect(
+        &self,
+        img: &mut Self::Image,
+        rect: Rect,
+        corner_radius: u32,
+        color: Self::Pixel,
+    ) {
+        self.draw_filled_rect(
+            img,
+            Rect::new(
+                rect.left() + corner_radius,
+                rect.top(),
+                rect.width() - corner_radius * 2,
+                rect.height(),
+            ),
+            color,
+        );
+
+        self.draw_filled_rect(
+            img,
+            Rect::new(
+                rect.left(),
+                rect.top() + corner_radius,
+                corner_radius,
+                rect.height() - corner_radius * 2,
+            ),
+            color,
+        );
+
+        self.draw_filled_rect(
+            img,
+            Rect::new(
+                rect.right() - corner_radius,
+                rect.top() + corner_radius,
+                corner_radius,
+                rect.height() - corner_radius * 2,
+            ),
+            color,
+        );
+
+        self.draw_filled_arc(
+            img,
+            Circle::new(
+                (rect.left() + corner_radius, rect.top() + corner_radius),
+                corner_radius,
+            ),
+            Angle::Degrees(180f64),
+            Angle::Degrees(270f64),
+            color,
+        );
+
+        self.draw_filled_arc(
+            img,
+            Circle::new(
+                (rect.left() + corner_radius, rect.bottom() - corner_radius),
+                corner_radius,
+            ),
+            Angle::Degrees(90f64),
+            Angle::Degrees(180f64),
+            color,
+        );
+
+        self.draw_filled_arc(
+            img,
+            Circle::new(
+                (rect.right() - corner_radius, rect.top() + corner_radius),
+                corner_radius,
+            ),
+            Angle::Degrees(270f64),
+            Angle::Degrees(360f64),
+            color,
+        );
+
+        self.draw_filled_arc(
+            img,
+            Circle::new(
+                (rect.right() - corner_radius, rect.bottom() - corner_radius),
+                corner_radius,
+            ),
+            Angle::Degrees(0f64),
+            Angle::Degrees(90f64),
+            color,
+        );
+    }
 }

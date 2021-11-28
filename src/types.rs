@@ -31,6 +31,14 @@ impl Rect {
     pub fn bottom(&self) -> u32 {
         self.top + self.height
     }
+
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

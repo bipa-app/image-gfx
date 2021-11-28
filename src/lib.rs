@@ -38,6 +38,21 @@ pub trait Renderer {
         end: Angle,
         color: Self::Pixel,
     );
+
+    fn draw_rounded_rect(
+        &self,
+        img: &mut Self::Image,
+        rect: Rect,
+        corner_radius: u32,
+        color: Self::Pixel,
+    );
+    fn draw_filled_rounded_rect(
+        &self,
+        img: &mut Self::Image,
+        rect: Rect,
+        corner_radius: u32,
+        color: Self::Pixel,
+    );
 }
 
 #[cfg(test)]
@@ -156,11 +171,19 @@ mod tests {
             Angle::Degrees(359.9999f64),
             image::Rgba([255, 0, 255, 255]),
         );
-        // r.draw_circle(
-        //     &mut img,
-        //     Circle::new((10, 80), 10),
-        //     image::Rgba([0, 0, 0, 255]),
-        // );
+
+        aar.draw_rounded_rect(
+            &mut img,
+            Rect::new(80, 10, 10, 10),
+            3,
+            image::Rgba([255, 0, 0, 255]),
+        );
+        aar.draw_filled_rounded_rect(
+            &mut img,
+            Rect::new(80, 25, 10, 10),
+            3,
+            image::Rgba([255, 0, 0, 255]),
+        );
 
         img.save("./test.png").unwrap();
     }
