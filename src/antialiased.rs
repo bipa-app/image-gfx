@@ -4,7 +4,7 @@ use image::{GenericImage, GenericImageView, Rgba, RgbaImage};
 
 use crate::{
     basic::BasicRenderer,
-    types::{Circle, Rect},
+    types::{Angle, Circle, Rect},
     Renderer,
 };
 
@@ -241,6 +241,133 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
                     ((x0 + y), (y0 - x + 1)),
                     color,
                 );
+            }
+        }
+    }
+
+    fn draw_arc(
+        &self,
+        img: &mut Self::Image,
+        circle: Circle,
+        mut start: Angle,
+        mut end: Angle,
+        color: Self::Pixel,
+    ) {
+        let radius = circle.radius();
+        if radius == 0 {
+            return;
+        }
+
+        let center = circle.center();
+        let (x0, y0) = center;
+
+        let mut x = radius;
+        let mut y = 0;
+
+        while start.to_degrees() < 0f64 {
+            start = Angle::Degrees(start.to_degrees() + 360f64);
+        }
+        while start.to_degrees() >= 360f64 {
+            start = Angle::Degrees(start.to_degrees() - 360f64);
+        }
+        while end.to_degrees() < 0f64 {
+            end = Angle::Degrees(end.to_degrees() + 360f64);
+        }
+        while end.to_degrees() >= 360f64 {
+            end = Angle::Degrees(end.to_degrees() - 360f64);
+        }
+
+        let (start, end) = if start.to_degrees() > end.to_degrees() {
+            (end, start)
+        } else {
+            (start, end)
+        };
+
+        let a1 = 0f64;
+        if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            img.blend_pixel(x0 + radius, y0, color);
+        }
+
+        let a1 = 90f64;
+        if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            img.blend_pixel(x0, y0 + radius, color);
+        }
+
+        let a1 = 180f64;
+        if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            img.blend_pixel(x0 - radius, y0, color);
+        }
+
+        let a1 = 270f64;
+        if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            img.blend_pixel(x0, y0 - radius, color);
+        }
+
+        while x > y {
+            y += 1;
+
+            let real_x = ((radius * radius - y * y) as f64).sqrt();
+            let real_x_ceil = real_x.ceil();
+            x = real_x_ceil as u32;
+            let k = real_x_ceil - real_x;
+
+            let c1 = rgba_u8_pixel_with_brightness(color, 1f64 - k);
+            let c2 = rgba_u8_pixel_with_brightness(color, k);
+
+            let a1 = (y as f64).atan2(x as f64).to_degrees();
+            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
+            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+                img.blend_pixel(x0 + x, y0 + y, c1);
+                img.blend_pixel(x0 + x - 1, y0 + y, c2);
+            }
+
+            let a1 = (x as f64).atan2(y as f64).to_degrees();
+            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
+            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+                img.blend_pixel(x0 + y, y0 + x, c1);
+                img.blend_pixel(x0 + y, y0 + x - 1, c2);
+            }
+
+            let a1 = (x as f64).atan2(-(y as f64)).to_degrees();
+            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
+            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+                img.blend_pixel(x0 - y, y0 + x, c1);
+                img.blend_pixel(x0 - y, y0 + x - 1, c2);
+            }
+
+            let a1 = (y as f64).atan2(-(x as f64)).to_degrees();
+            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
+            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+                img.blend_pixel(x0 - x, y0 + y, c1);
+                img.blend_pixel(x0 - x + 1, y0 + y, c2);
+            }
+
+            let a1 = (-(y as f64)).atan2(-(x as f64)).to_degrees();
+            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
+            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+                img.blend_pixel(x0 - x, y0 - y, c1);
+                img.blend_pixel(x0 - x + 1, y0 - y, c2);
+            }
+
+            let a1 = (-(x as f64)).atan2(-(y as f64)).to_degrees();
+            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
+            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+                img.blend_pixel(x0 - y, y0 - x, c1);
+                img.blend_pixel(x0 - y, y0 - x + 1, c2);
+            }
+
+            let a1 = (-(x as f64)).atan2(y as f64).to_degrees();
+            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
+            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+                img.blend_pixel(x0 + y, y0 - x, c1);
+                img.blend_pixel(x0 + y, y0 - x + 1, c2);
+            }
+
+            let a1 = (-(y as f64)).atan2(x as f64).to_degrees();
+            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
+            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+                img.blend_pixel(x0 + x, y0 - y, c1);
+                img.blend_pixel(x0 + x - 1, y0 - y, c2);
             }
         }
     }

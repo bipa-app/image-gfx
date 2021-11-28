@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use image::{GenericImage, GenericImageView};
 
 use crate::{
-    types::{Circle, Rect},
+    types::{Angle, Circle, Rect},
     Renderer,
 };
 
@@ -147,6 +147,104 @@ impl<I: GenericImage> Renderer for BasicRenderer<I> {
 
             if x0 >= y && y0 >= x {
                 self.draw_line(img, ((x0 - y), (y0 - x)), ((x0 + y), (y0 - x)), color);
+            }
+
+            x += 1;
+            if p < 0 {
+                p += 2 * x as i64 + 1;
+            } else {
+                y -= 1;
+                p += 2 * (x as i64 - y as i64) + 1;
+            }
+        }
+    }
+
+    fn draw_arc(
+        &self,
+        img: &mut Self::Image,
+        circle: Circle,
+        mut start: Angle,
+        mut end: Angle,
+        color: Self::Pixel,
+    ) {
+        let radius = circle.radius();
+        if radius == 0 {
+            return;
+        }
+
+        let center = circle.center();
+        let (x0, y0) = center;
+
+        let mut x = 0;
+        let mut y = radius;
+        let mut p = 1 - radius as i64;
+
+        while start.to_degrees() < 0f64 {
+            start = Angle::Degrees(start.to_degrees() + 360f64);
+        }
+        while start.to_degrees() >= 360f64 {
+            start = Angle::Degrees(start.to_degrees() - 360f64);
+        }
+        while end.to_degrees() < 0f64 {
+            end = Angle::Degrees(end.to_degrees() + 360f64);
+        }
+        while end.to_degrees() >= 360f64 {
+            end = Angle::Degrees(end.to_degrees() - 360f64);
+        }
+
+        let (start, end) = if start.to_degrees() > end.to_degrees() {
+            (end, start)
+        } else {
+            (start, end)
+        };
+
+        while x <= y {
+            let a1 = (y as f64).atan2(x as f64).to_degrees();
+            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
+            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+                img.blend_pixel(x0 + x, y0 + y, color);
+            }
+
+            let a2 = (x as f64).atan2(y as f64).to_degrees();
+            let a2 = if a2 < 0f64 { a2 + 360f64 } else { a2 };
+            if a2 >= start.to_degrees() && a2 <= end.to_degrees() {
+                img.blend_pixel(x0 + y, y0 + x, color);
+            }
+
+            let a3 = (x as f64).atan2(-(y as f64)).to_degrees();
+            let a3 = if a3 < 0f64 { a3 + 360f64 } else { a3 };
+            if a3 >= start.to_degrees() && a3 <= end.to_degrees() {
+                img.blend_pixel(x0 - y, y0 + x, color);
+            }
+
+            let a4 = (y as f64).atan2(-(x as f64)).to_degrees();
+            let a4 = if a4 < 0f64 { a4 + 360f64 } else { a4 };
+            if a4 >= start.to_degrees() && a4 <= end.to_degrees() {
+                img.blend_pixel(x0 - x, y0 + y, color);
+            }
+
+            let a5 = (-(y as f64)).atan2(-(x as f64)).to_degrees();
+            let a5 = if a5 < 0f64 { a5 + 360f64 } else { a5 };
+            if a5 >= start.to_degrees() && a5 <= end.to_degrees() {
+                img.blend_pixel(x0 - x, y0 - y, color);
+            }
+
+            let a6 = (-(x as f64)).atan2(-(y as f64)).to_degrees();
+            let a6 = if a6 < 0f64 { a6 + 360f64 } else { a6 };
+            if a6 >= start.to_degrees() && a6 <= end.to_degrees() {
+                img.blend_pixel(x0 - y, y0 - x, color);
+            }
+
+            let a7 = (-(x as f64)).atan2(y as f64).to_degrees();
+            let a7 = if a7 < 0f64 { a7 + 360f64 } else { a7 };
+            if a7 >= start.to_degrees() && a7 <= end.to_degrees() {
+                img.blend_pixel(x0 + y, y0 - x, color);
+            }
+
+            let a8 = (-(y as f64)).atan2(x as f64).to_degrees();
+            let a8 = if a8 < 0f64 { a8 + 360f64 } else { a8 };
+            if a8 >= start.to_degrees() && a8 <= end.to_degrees() {
+                img.blend_pixel(x0 + x, y0 - y, color);
             }
 
             x += 1;

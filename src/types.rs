@@ -33,6 +33,7 @@ impl Rect {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct Circle {
     center_x: u32,
     center_y: u32,
@@ -54,5 +55,27 @@ impl Circle {
 
     pub fn radius(&self) -> u32 {
         self.radius
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Angle {
+    Degrees(f64),
+    Radians(f64),
+}
+
+impl Angle {
+    pub fn to_degrees(&self) -> f64 {
+        match self {
+            Angle::Degrees(d) => *d,
+            Angle::Radians(r) => r.to_degrees(),
+        }
+    }
+
+    pub fn to_radians(&self) -> f64 {
+        match self {
+            Angle::Degrees(d) => d.to_radians(),
+            Angle::Radians(r) => *r,
+        }
     }
 }

@@ -1,4 +1,4 @@
-use types::{Circle, Rect};
+use types::{Angle, Circle, Rect};
 
 mod antialiased;
 mod basic;
@@ -21,6 +21,15 @@ pub trait Renderer {
 
     fn draw_circle(&self, img: &mut Self::Image, circle: Circle, color: Self::Pixel);
     fn draw_filled_circle(&self, img: &mut Self::Image, circle: Circle, color: Self::Pixel);
+
+    fn draw_arc(
+        &self,
+        img: &mut Self::Image,
+        circle: Circle,
+        start: Angle,
+        end: Angle,
+        color: Self::Pixel,
+    );
 }
 
 #[cfg(test)]
@@ -80,6 +89,35 @@ mod tests {
             &mut img,
             Circle::new((50, 50), 10),
             image::Rgba([0, 255, 0, 255]),
+        );
+
+        aar.draw_arc(
+            &mut img,
+            Circle::new((10, 50), 5),
+            Angle::Degrees(0f64),
+            Angle::Degrees(90f64),
+            image::Rgba([0, 255, 0, 255]),
+        );
+        aar.draw_arc(
+            &mut img,
+            Circle::new((10, 50), 5),
+            Angle::Degrees(90f64),
+            Angle::Degrees(180f64),
+            image::Rgba([0, 0, 255, 255]),
+        );
+        aar.draw_arc(
+            &mut img,
+            Circle::new((10, 50), 5),
+            Angle::Degrees(180f64),
+            Angle::Degrees(270f64),
+            image::Rgba([255, 0, 0, 255]),
+        );
+        aar.draw_arc(
+            &mut img,
+            Circle::new((10, 50), 5),
+            Angle::Degrees(270f64),
+            Angle::Degrees(359.9999f64),
+            image::Rgba([255, 0, 255, 255]),
         );
 
         img.save("./test.png").unwrap();
