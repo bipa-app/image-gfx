@@ -1,10 +1,9 @@
-mod antialiased;
-mod basic;
-mod types;
+pub mod antialiased;
+pub mod basic;
+pub mod geom;
+pub mod types;
 
-pub use antialiased::*;
-pub use basic::*;
-pub use types::*;
+use types::*;
 
 pub trait Renderer {
     type Image;
@@ -137,7 +136,7 @@ mod tests {
             Angle::Degrees(270f64),
             image::Rgba([255, 0, 0, 255]),
         );
-        aar.draw_arc(
+        r.draw_arc(
             &mut img,
             Circle::new((10, 50), 5),
             Angle::Degrees(270f64),
@@ -145,7 +144,7 @@ mod tests {
             image::Rgba([255, 0, 255, 255]),
         );
 
-        aar.draw_filled_arc(
+        r.draw_filled_arc(
             &mut img,
             Circle::new((10, 80), 10),
             Angle::Degrees(0f64),

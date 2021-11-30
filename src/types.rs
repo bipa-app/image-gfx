@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Rect {
     left: u32,
@@ -73,6 +75,35 @@ pub enum Angle {
 }
 
 impl Angle {
+    pub fn normalize(&mut self) {
+        *self = self.normalized()
+    }
+
+    pub fn normalized(&self) -> Self {
+        match self {
+            Angle::Degrees(d) => {
+                let d = *d;
+
+                if 0f64 <= d && d <= 360f64 {
+                    Angle::Degrees(d)
+                } else {
+                    let dd = d % 360f64;
+                    Angle::Degrees(if dd < 0f64 { dd + 360f64 } else { dd })
+                }
+            }
+            Angle::Radians(r) => {
+                let r = *r;
+
+                if 0f64 <= r && r <= 2f64 * PI {
+                    Angle::Radians(r)
+                } else {
+                    let rr = r % (2f64 * PI);
+                    Angle::Radians(if rr < 0f64 { rr + 2f64 * PI } else { rr })
+                }
+            }
+        }
+    }
+
     pub fn to_degrees(&self) -> f64 {
         match self {
             Angle::Degrees(d) => *d,
@@ -85,5 +116,44 @@ impl Angle {
             Angle::Degrees(d) => d.to_radians(),
             Angle::Radians(r) => *r,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::f64::consts::PI;
+
+    use super::Angle;
+
+    use assert_approx_eq::assert_approx_eq;
+
+    #[test]
+    fn angle_normalize_works() {
+        assert_eq!(Angle::Degrees(360f64).to_degrees(), 360f64);
+        assert_eq!(Angle::Radians(2f64 * PI).to_radians(), 2f64 * PI);
+
+        assert_approx_eq!(
+            Angle::Degrees(361.2f64).normalized().to_degrees(),
+            1.2f64,
+            1e-12f64
+        );
+
+        assert_approx_eq!(
+            Angle::Degrees(-270f64).normalized().to_degrees(),
+            90f64,
+            1e-12f64
+        );
+
+        assert_approx_eq!(
+            Angle::Radians(2.5f64 * PI).normalized().to_radians(),
+            0.5f64 * PI,
+            1e-12f64
+        );
+
+        assert_approx_eq!(
+            Angle::Radians(-0.5f64 * PI).normalized().to_radians(),
+            1.5f64 * PI,
+            1e-12f64
+        );
     }
 }

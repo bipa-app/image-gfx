@@ -4,6 +4,7 @@ use image::{GenericImage, GenericImageView, Rgba, RgbaImage};
 
 use crate::{
     basic::BasicRenderer,
+    geom::inside_arc,
     types::{Angle, Circle, Rect},
     Renderer,
 };
@@ -264,18 +265,8 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
         let mut x = radius;
         let mut y = 0;
 
-        while start.to_degrees() < 0f64 {
-            start = Angle::Degrees(start.to_degrees() + 360f64);
-        }
-        while start.to_degrees() > 360f64 {
-            start = Angle::Degrees(start.to_degrees() - 360f64);
-        }
-        while end.to_degrees() < 0f64 {
-            end = Angle::Degrees(end.to_degrees() + 360f64);
-        }
-        while end.to_degrees() > 360f64 {
-            end = Angle::Degrees(end.to_degrees() - 360f64);
-        }
+        start.normalize();
+        end.normalize();
 
         let (start, end) = if start.to_degrees() > end.to_degrees() {
             (end, start)
@@ -283,23 +274,19 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
             (start, end)
         };
 
-        let a1 = 0f64;
-        if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+        if 0f64 >= start.to_degrees() && 0f64 <= end.to_degrees() {
             img.blend_pixel(x0 + radius, y0, color);
         }
 
-        let a1 = 90f64;
-        if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+        if 90f64 >= start.to_degrees() && 90f64 <= end.to_degrees() {
             img.blend_pixel(x0, y0 + radius, color);
         }
 
-        let a1 = 180f64;
-        if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+        if 180f64 >= start.to_degrees() && 180f64 <= end.to_degrees() {
             img.blend_pixel(x0 - radius, y0, color);
         }
 
-        let a1 = 270f64;
-        if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+        if 270f64 >= start.to_degrees() && 270f64 <= end.to_degrees() {
             img.blend_pixel(x0, y0 - radius, color);
         }
 
@@ -314,58 +301,42 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
             let c1 = rgba_u8_pixel_with_brightness(color, 1f64 - k);
             let c2 = rgba_u8_pixel_with_brightness(color, k);
 
-            let a1 = (y as f64).atan2(x as f64).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((x as f64, y as f64), start, end) {
                 img.blend_pixel(x0 + x, y0 + y, c1);
                 img.blend_pixel(x0 + x - 1, y0 + y, c2);
             }
 
-            let a1 = (x as f64).atan2(y as f64).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((y as f64, x as f64), start, end) {
                 img.blend_pixel(x0 + y, y0 + x, c1);
                 img.blend_pixel(x0 + y, y0 + x - 1, c2);
             }
 
-            let a1 = (x as f64).atan2(-(y as f64)).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((-(y as f64), x as f64), start, end) {
                 img.blend_pixel(x0 - y, y0 + x, c1);
                 img.blend_pixel(x0 - y, y0 + x - 1, c2);
             }
 
-            let a1 = (y as f64).atan2(-(x as f64)).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((-(x as f64), y as f64), start, end) {
                 img.blend_pixel(x0 - x, y0 + y, c1);
                 img.blend_pixel(x0 - x + 1, y0 + y, c2);
             }
 
-            let a1 = (-(y as f64)).atan2(-(x as f64)).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((-(x as f64), -(y as f64)), start, end) {
                 img.blend_pixel(x0 - x, y0 - y, c1);
                 img.blend_pixel(x0 - x + 1, y0 - y, c2);
             }
 
-            let a1 = (-(x as f64)).atan2(-(y as f64)).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((-(y as f64), -(x as f64)), start, end) {
                 img.blend_pixel(x0 - y, y0 - x, c1);
                 img.blend_pixel(x0 - y, y0 - x + 1, c2);
             }
 
-            let a1 = (-(x as f64)).atan2(y as f64).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((y as f64, -(x as f64)), start, end) {
                 img.blend_pixel(x0 + y, y0 - x, c1);
                 img.blend_pixel(x0 + y, y0 - x + 1, c2);
             }
 
-            let a1 = (-(y as f64)).atan2(x as f64).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((x as f64, -(y as f64)), start, end) {
                 img.blend_pixel(x0 + x, y0 - y, c1);
                 img.blend_pixel(x0 + x - 1, y0 - y, c2);
             }
@@ -391,18 +362,8 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
         let mut x = radius;
         let mut y = 0;
 
-        while start.to_degrees() < 0f64 {
-            start = Angle::Degrees(start.to_degrees() + 360f64);
-        }
-        while start.to_degrees() > 360f64 {
-            start = Angle::Degrees(start.to_degrees() - 360f64);
-        }
-        while end.to_degrees() < 0f64 {
-            end = Angle::Degrees(end.to_degrees() + 360f64);
-        }
-        while end.to_degrees() > 360f64 {
-            end = Angle::Degrees(end.to_degrees() - 360f64);
-        }
+        start.normalize();
+        end.normalize();
 
         let (start, end) = if start.to_degrees() > end.to_degrees() {
             (end, start)
@@ -410,18 +371,9 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
             (start, end)
         };
 
-        let filter_fn = |x, y| {
-            let a1 = (y as f64 - y0 as f64)
-                .atan2(x as f64 - x0 as f64)
-                .to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-
-            a1 >= start.to_degrees() && a1 <= end.to_degrees()
-        };
+        let filter_fn = |x, y| inside_arc((x as f64 - x0 as f64, y as f64 - y0 as f64), start, end);
 
         let basic_renderer = BasicRenderer::default();
-
-        img.blend_pixel(x0, y0, color);
 
         basic_renderer.filtered_draw_line(
             img,
@@ -449,58 +401,42 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
             let c1 = rgba_u8_pixel_with_brightness(color, 1f64 - k);
             let c2 = rgba_u8_pixel_with_brightness(color, k);
 
-            let a1 = (y as f64).atan2(x as f64).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((x as f64, y as f64), start, end) {
                 img.blend_pixel(x0 + x, y0 + y, c1);
                 img.blend_pixel(x0 + x - 1, y0 + y, c2);
             }
 
-            let a1 = (x as f64).atan2(y as f64).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((y as f64, x as f64), start, end) {
                 img.blend_pixel(x0 + y, y0 + x, c1);
                 img.blend_pixel(x0 + y, y0 + x - 1, c2);
             }
 
-            let a1 = (x as f64).atan2(-(y as f64)).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((-(y as f64), x as f64), start, end) {
                 img.blend_pixel(x0 - y, y0 + x, c1);
                 img.blend_pixel(x0 - y, y0 + x - 1, c2);
             }
 
-            let a1 = (y as f64).atan2(-(x as f64)).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((-(x as f64), y as f64), start, end) {
                 img.blend_pixel(x0 - x, y0 + y, c1);
                 img.blend_pixel(x0 - x + 1, y0 + y, c2);
             }
 
-            let a1 = (-(y as f64)).atan2(-(x as f64)).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((-(x as f64), -(y as f64)), start, end) {
                 img.blend_pixel(x0 - x, y0 - y, c1);
                 img.blend_pixel(x0 - x + 1, y0 - y, c2);
             }
 
-            let a1 = (-(x as f64)).atan2(-(y as f64)).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((-(y as f64), -(x as f64)), start, end) {
                 img.blend_pixel(x0 - y, y0 - x, c1);
                 img.blend_pixel(x0 - y, y0 - x + 1, c2);
             }
 
-            let a1 = (-(x as f64)).atan2(y as f64).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((y as f64, -(x as f64)), start, end) {
                 img.blend_pixel(x0 + y, y0 - x, c1);
                 img.blend_pixel(x0 + y, y0 - x + 1, c2);
             }
 
-            let a1 = (-(y as f64)).atan2(x as f64).to_degrees();
-            let a1 = if a1 < 0f64 { a1 + 360f64 } else { a1 };
-            if a1 >= start.to_degrees() && a1 <= end.to_degrees() {
+            if inside_arc((x as f64, -(y as f64)), start, end) {
                 img.blend_pixel(x0 + x, y0 - y, c1);
                 img.blend_pixel(x0 + x - 1, y0 - y, c2);
             }
@@ -545,6 +481,8 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
                 );
             }
         }
+
+        img.blend_pixel(x0, y0, color);
     }
 
     fn draw_rounded_rect(
