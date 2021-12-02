@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use image::{GenericImage, GenericImageView};
 
 use crate::{
+    blend_pixel,
     geom::inside_arc,
     types::{Angle, Circle, Rect},
     Renderer,
@@ -43,7 +44,7 @@ impl<I: GenericImage> BasicRenderer<I> {
 
         loop {
             if filter(x as u32, y as u32) {
-                img.blend_pixel(x as u32, y as u32, color);
+                blend_pixel(img, x as u32, y as u32, color);
             }
 
             if x as u32 == x1 && y as u32 == y1 {
@@ -81,20 +82,20 @@ impl<I: GenericImage> Renderer for BasicRenderer<I> {
 
     fn draw_rect(&self, img: &mut Self::Image, rect: Rect, color: Self::Pixel) {
         for x in rect.left()..=rect.right() {
-            img.blend_pixel(x, rect.top(), color);
-            img.blend_pixel(x, rect.bottom(), color);
+            blend_pixel(img, x, rect.top(), color);
+            blend_pixel(img, x, rect.bottom(), color);
         }
 
         for y in rect.top()..=rect.bottom() {
-            img.blend_pixel(rect.left(), y, color);
-            img.blend_pixel(rect.right(), y, color);
+            blend_pixel(img, rect.left(), y, color);
+            blend_pixel(img, rect.right(), y, color);
         }
     }
 
     fn draw_filled_rect(&self, img: &mut Self::Image, rect: Rect, color: Self::Pixel) {
         for x in rect.left()..=rect.right() {
             for y in rect.top()..=rect.bottom() {
-                img.blend_pixel(x, y, color);
+                blend_pixel(img, x, y, color);
             }
         }
     }
@@ -113,14 +114,14 @@ impl<I: GenericImage> Renderer for BasicRenderer<I> {
         let mut p = 1 - radius as i64;
 
         while x <= y {
-            img.blend_pixel(x0 + x, y0 + y, color);
-            img.blend_pixel(x0 + y, y0 + x, color);
-            img.blend_pixel(x0 - y, y0 + x, color);
-            img.blend_pixel(x0 - x, y0 + y, color);
-            img.blend_pixel(x0 - x, y0 - y, color);
-            img.blend_pixel(x0 - y, y0 - x, color);
-            img.blend_pixel(x0 + y, y0 - x, color);
-            img.blend_pixel(x0 + x, y0 - y, color);
+            blend_pixel(img, x0 + x, y0 + y, color);
+            blend_pixel(img, x0 + y, y0 + x, color);
+            blend_pixel(img, x0 - y, y0 + x, color);
+            blend_pixel(img, x0 - x, y0 + y, color);
+            blend_pixel(img, x0 - x, y0 - y, color);
+            blend_pixel(img, x0 - y, y0 - x, color);
+            blend_pixel(img, x0 + y, y0 - x, color);
+            blend_pixel(img, x0 + x, y0 - y, color);
 
             x += 1;
             if p < 0 {
@@ -206,35 +207,35 @@ impl<I: GenericImage> Renderer for BasicRenderer<I> {
 
         while x <= y {
             if inside_arc((x as f64, y as f64), start, end) {
-                img.blend_pixel(x0 + x, y0 + y, color);
+                blend_pixel(img, x0 + x, y0 + y, color);
             }
 
             if inside_arc((y as f64, x as f64), start, end) {
-                img.blend_pixel(x0 + y, y0 + x, color);
+                blend_pixel(img, x0 + y, y0 + x, color);
             }
 
             if inside_arc((-(y as f64), x as f64), start, end) {
-                img.blend_pixel(x0 - y, y0 + x, color);
+                blend_pixel(img, x0 - y, y0 + x, color);
             }
 
             if inside_arc((-(x as f64), y as f64), start, end) {
-                img.blend_pixel(x0 - x, y0 + y, color);
+                blend_pixel(img, x0 - x, y0 + y, color);
             }
 
             if inside_arc((-(x as f64), -(y as f64)), start, end) {
-                img.blend_pixel(x0 - x, y0 - y, color);
+                blend_pixel(img, x0 - x, y0 - y, color);
             }
 
             if inside_arc((-(y as f64), -(x as f64)), start, end) {
-                img.blend_pixel(x0 - y, y0 - x, color);
+                blend_pixel(img, x0 - y, y0 - x, color);
             }
 
             if inside_arc((y as f64, -(x as f64)), start, end) {
-                img.blend_pixel(x0 + y, y0 - x, color);
+                blend_pixel(img, x0 + y, y0 - x, color);
             }
 
             if inside_arc((x as f64, -(y as f64)), start, end) {
-                img.blend_pixel(x0 + x, y0 - y, color);
+                blend_pixel(img, x0 + x, y0 - y, color);
             }
 
             x += 1;
@@ -278,7 +279,7 @@ impl<I: GenericImage> Renderer for BasicRenderer<I> {
 
         let filter_fn = |x, y| inside_arc((x as f64 - x0 as f64, y as f64 - y0 as f64), start, end);
 
-        img.blend_pixel(x0, y0, color);
+        blend_pixel(img, x0, y0, color);
 
         self.filtered_draw_line(img, (x0 - radius, y0), (x0 + radius, y0), color, filter_fn);
         self.filtered_draw_line(img, (x0, y0 - radius), (x0, y0 + radius), color, filter_fn);

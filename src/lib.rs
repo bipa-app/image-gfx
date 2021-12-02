@@ -3,6 +3,7 @@ pub mod basic;
 pub mod geom;
 pub mod types;
 
+use image::{GenericImage, GenericImageView};
 use types::*;
 
 pub trait Renderer {
@@ -54,6 +55,17 @@ pub trait Renderer {
         corner_radius: u32,
         color: Self::Pixel,
     );
+}
+
+pub(crate) fn blend_pixel<I: GenericImage>(
+    img: &mut I,
+    x: u32,
+    y: u32,
+    color: <I as GenericImageView>::Pixel,
+) {
+    if img.in_bounds(x, y) {
+        img.blend_pixel(x, y, color);
+    }
 }
 
 #[cfg(test)]

@@ -1,9 +1,10 @@
 use std::marker::PhantomData;
 
-use image::{GenericImage, GenericImageView, Rgba, RgbaImage};
+use image::{GenericImageView, Rgba, RgbaImage};
 
 use crate::{
     basic::BasicRenderer,
+    blend_pixel,
     geom::inside_arc,
     types::{Angle, Circle, Rect},
     Renderer,
@@ -62,12 +63,14 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
 
         if steep {
             for x in x0..=x1 {
-                img.blend_pixel(
+                blend_pixel(
+                    img,
                     intersect_y as u32,
                     x as u32,
                     rgba_u8_pixel_with_brightness(color, 1f64 - intersect_y.fract()),
                 );
-                img.blend_pixel(
+                blend_pixel(
+                    img,
                     intersect_y as u32 + 1,
                     x as u32,
                     rgba_u8_pixel_with_brightness(color, intersect_y.fract()),
@@ -76,12 +79,14 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
             }
         } else {
             for x in x0..=x1 {
-                img.blend_pixel(
+                blend_pixel(
+                    img,
                     x as u32,
                     intersect_y as u32,
                     rgba_u8_pixel_with_brightness(color, 1f64 - intersect_y.fract()),
                 );
-                img.blend_pixel(
+                blend_pixel(
+                    img,
                     x as u32,
                     intersect_y as u32 + 1,
                     rgba_u8_pixel_with_brightness(color, intersect_y.fract()),
@@ -108,10 +113,10 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
         let center = circle.center();
         let (x0, y0) = center;
 
-        img.blend_pixel(x0 + radius, y0, color);
-        img.blend_pixel(x0 - radius, y0, color);
-        img.blend_pixel(x0, y0 + radius, color);
-        img.blend_pixel(x0, y0 - radius, color);
+        blend_pixel(img, x0 + radius, y0, color);
+        blend_pixel(img, x0 - radius, y0, color);
+        blend_pixel(img, x0, y0 + radius, color);
+        blend_pixel(img, x0, y0 - radius, color);
 
         let mut x = radius;
         let mut y = 0;
@@ -127,29 +132,29 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
             let c1 = rgba_u8_pixel_with_brightness(color, 1f64 - k);
             let c2 = rgba_u8_pixel_with_brightness(color, k);
 
-            img.blend_pixel(x0 + x, y0 + y, c1);
-            img.blend_pixel(x0 + x - 1, y0 + y, c2);
+            blend_pixel(img, x0 + x, y0 + y, c1);
+            blend_pixel(img, x0 + x - 1, y0 + y, c2);
 
-            img.blend_pixel(x0 + y, y0 + x, c1);
-            img.blend_pixel(x0 + y, y0 + x - 1, c2);
+            blend_pixel(img, x0 + y, y0 + x, c1);
+            blend_pixel(img, x0 + y, y0 + x - 1, c2);
 
-            img.blend_pixel(x0 - y, y0 + x, c1);
-            img.blend_pixel(x0 - y, y0 + x - 1, c2);
+            blend_pixel(img, x0 - y, y0 + x, c1);
+            blend_pixel(img, x0 - y, y0 + x - 1, c2);
 
-            img.blend_pixel(x0 - x, y0 + y, c1);
-            img.blend_pixel(x0 - x + 1, y0 + y, c2);
+            blend_pixel(img, x0 - x, y0 + y, c1);
+            blend_pixel(img, x0 - x + 1, y0 + y, c2);
 
-            img.blend_pixel(x0 - x, y0 - y, c1);
-            img.blend_pixel(x0 - x + 1, y0 - y, c2);
+            blend_pixel(img, x0 - x, y0 - y, c1);
+            blend_pixel(img, x0 - x + 1, y0 - y, c2);
 
-            img.blend_pixel(x0 - y, y0 - x, c1);
-            img.blend_pixel(x0 - y, y0 - x + 1, c2);
+            blend_pixel(img, x0 - y, y0 - x, c1);
+            blend_pixel(img, x0 - y, y0 - x + 1, c2);
 
-            img.blend_pixel(x0 + y, y0 - x, c1);
-            img.blend_pixel(x0 + y, y0 - x + 1, c2);
+            blend_pixel(img, x0 + y, y0 - x, c1);
+            blend_pixel(img, x0 + y, y0 - x + 1, c2);
 
-            img.blend_pixel(x0 + x, y0 - y, c1);
-            img.blend_pixel(x0 + x - 1, y0 - y, c2);
+            blend_pixel(img, x0 + x, y0 - y, c1);
+            blend_pixel(img, x0 + x - 1, y0 - y, c2);
         }
     }
 
@@ -162,10 +167,10 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
         let center = circle.center();
         let (x0, y0) = center;
 
-        img.blend_pixel(x0 + radius, y0, color);
-        img.blend_pixel(x0 - radius, y0, color);
-        img.blend_pixel(x0, y0 + radius, color);
-        img.blend_pixel(x0, y0 - radius, color);
+        blend_pixel(img, x0 + radius, y0, color);
+        blend_pixel(img, x0 - radius, y0, color);
+        blend_pixel(img, x0, y0 + radius, color);
+        blend_pixel(img, x0, y0 - radius, color);
 
         self.draw_line(img, (x0 - radius, y0), (x0 + radius, y0), color);
         self.draw_line(img, (x0, y0 - radius), (x0, y0 + radius), color);
@@ -184,29 +189,29 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
             let c1 = rgba_u8_pixel_with_brightness(color, 1f64 - k);
             let c2 = rgba_u8_pixel_with_brightness(color, k);
 
-            img.blend_pixel(x0 + x, y0 + y, c1);
-            img.blend_pixel(x0 + x - 1, y0 + y, c2);
+            blend_pixel(img, x0 + x, y0 + y, c1);
+            blend_pixel(img, x0 + x - 1, y0 + y, c2);
 
-            img.blend_pixel(x0 + y, y0 + x, c1);
-            img.blend_pixel(x0 + y, y0 + x - 1, c2);
+            blend_pixel(img, x0 + y, y0 + x, c1);
+            blend_pixel(img, x0 + y, y0 + x - 1, c2);
 
-            img.blend_pixel(x0 - y, y0 + x, c1);
-            img.blend_pixel(x0 - y, y0 + x - 1, c2);
+            blend_pixel(img, x0 - y, y0 + x, c1);
+            blend_pixel(img, x0 - y, y0 + x - 1, c2);
 
-            img.blend_pixel(x0 - x, y0 + y, c1);
-            img.blend_pixel(x0 - x + 1, y0 + y, c2);
+            blend_pixel(img, x0 - x, y0 + y, c1);
+            blend_pixel(img, x0 - x + 1, y0 + y, c2);
 
-            img.blend_pixel(x0 - x, y0 - y, c1);
-            img.blend_pixel(x0 - x + 1, y0 - y, c2);
+            blend_pixel(img, x0 - x, y0 - y, c1);
+            blend_pixel(img, x0 - x + 1, y0 - y, c2);
 
-            img.blend_pixel(x0 - y, y0 - x, c1);
-            img.blend_pixel(x0 - y, y0 - x + 1, c2);
+            blend_pixel(img, x0 - y, y0 - x, c1);
+            blend_pixel(img, x0 - y, y0 - x + 1, c2);
 
-            img.blend_pixel(x0 + y, y0 - x, c1);
-            img.blend_pixel(x0 + y, y0 - x + 1, c2);
+            blend_pixel(img, x0 + y, y0 - x, c1);
+            blend_pixel(img, x0 + y, y0 - x + 1, c2);
 
-            img.blend_pixel(x0 + x, y0 - y, c1);
-            img.blend_pixel(x0 + x - 1, y0 - y, c2);
+            blend_pixel(img, x0 + x, y0 - y, c1);
+            blend_pixel(img, x0 + x - 1, y0 - y, c2);
 
             if x0 >= x {
                 self.draw_line(
@@ -275,19 +280,19 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
         };
 
         if 0f64 >= start.to_degrees() && 0f64 <= end.to_degrees() {
-            img.blend_pixel(x0 + radius, y0, color);
+            blend_pixel(img, x0 + radius, y0, color);
         }
 
         if 90f64 >= start.to_degrees() && 90f64 <= end.to_degrees() {
-            img.blend_pixel(x0, y0 + radius, color);
+            blend_pixel(img, x0, y0 + radius, color);
         }
 
         if 180f64 >= start.to_degrees() && 180f64 <= end.to_degrees() {
-            img.blend_pixel(x0 - radius, y0, color);
+            blend_pixel(img, x0 - radius, y0, color);
         }
 
         if 270f64 >= start.to_degrees() && 270f64 <= end.to_degrees() {
-            img.blend_pixel(x0, y0 - radius, color);
+            blend_pixel(img, x0, y0 - radius, color);
         }
 
         while x > y {
@@ -302,43 +307,43 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
             let c2 = rgba_u8_pixel_with_brightness(color, k);
 
             if inside_arc((x as f64, y as f64), start, end) {
-                img.blend_pixel(x0 + x, y0 + y, c1);
-                img.blend_pixel(x0 + x - 1, y0 + y, c2);
+                blend_pixel(img, x0 + x, y0 + y, c1);
+                blend_pixel(img, x0 + x - 1, y0 + y, c2);
             }
 
             if inside_arc((y as f64, x as f64), start, end) {
-                img.blend_pixel(x0 + y, y0 + x, c1);
-                img.blend_pixel(x0 + y, y0 + x - 1, c2);
+                blend_pixel(img, x0 + y, y0 + x, c1);
+                blend_pixel(img, x0 + y, y0 + x - 1, c2);
             }
 
             if inside_arc((-(y as f64), x as f64), start, end) {
-                img.blend_pixel(x0 - y, y0 + x, c1);
-                img.blend_pixel(x0 - y, y0 + x - 1, c2);
+                blend_pixel(img, x0 - y, y0 + x, c1);
+                blend_pixel(img, x0 - y, y0 + x - 1, c2);
             }
 
             if inside_arc((-(x as f64), y as f64), start, end) {
-                img.blend_pixel(x0 - x, y0 + y, c1);
-                img.blend_pixel(x0 - x + 1, y0 + y, c2);
+                blend_pixel(img, x0 - x, y0 + y, c1);
+                blend_pixel(img, x0 - x + 1, y0 + y, c2);
             }
 
             if inside_arc((-(x as f64), -(y as f64)), start, end) {
-                img.blend_pixel(x0 - x, y0 - y, c1);
-                img.blend_pixel(x0 - x + 1, y0 - y, c2);
+                blend_pixel(img, x0 - x, y0 - y, c1);
+                blend_pixel(img, x0 - x + 1, y0 - y, c2);
             }
 
             if inside_arc((-(y as f64), -(x as f64)), start, end) {
-                img.blend_pixel(x0 - y, y0 - x, c1);
-                img.blend_pixel(x0 - y, y0 - x + 1, c2);
+                blend_pixel(img, x0 - y, y0 - x, c1);
+                blend_pixel(img, x0 - y, y0 - x + 1, c2);
             }
 
             if inside_arc((y as f64, -(x as f64)), start, end) {
-                img.blend_pixel(x0 + y, y0 - x, c1);
-                img.blend_pixel(x0 + y, y0 - x + 1, c2);
+                blend_pixel(img, x0 + y, y0 - x, c1);
+                blend_pixel(img, x0 + y, y0 - x + 1, c2);
             }
 
             if inside_arc((x as f64, -(y as f64)), start, end) {
-                img.blend_pixel(x0 + x, y0 - y, c1);
-                img.blend_pixel(x0 + x - 1, y0 - y, c2);
+                blend_pixel(img, x0 + x, y0 - y, c1);
+                blend_pixel(img, x0 + x - 1, y0 - y, c2);
             }
         }
     }
@@ -402,43 +407,43 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
             let c2 = rgba_u8_pixel_with_brightness(color, k);
 
             if inside_arc((x as f64, y as f64), start, end) {
-                img.blend_pixel(x0 + x, y0 + y, c1);
-                img.blend_pixel(x0 + x - 1, y0 + y, c2);
+                blend_pixel(img, x0 + x, y0 + y, c1);
+                blend_pixel(img, x0 + x - 1, y0 + y, c2);
             }
 
             if inside_arc((y as f64, x as f64), start, end) {
-                img.blend_pixel(x0 + y, y0 + x, c1);
-                img.blend_pixel(x0 + y, y0 + x - 1, c2);
+                blend_pixel(img, x0 + y, y0 + x, c1);
+                blend_pixel(img, x0 + y, y0 + x - 1, c2);
             }
 
             if inside_arc((-(y as f64), x as f64), start, end) {
-                img.blend_pixel(x0 - y, y0 + x, c1);
-                img.blend_pixel(x0 - y, y0 + x - 1, c2);
+                blend_pixel(img, x0 - y, y0 + x, c1);
+                blend_pixel(img, x0 - y, y0 + x - 1, c2);
             }
 
             if inside_arc((-(x as f64), y as f64), start, end) {
-                img.blend_pixel(x0 - x, y0 + y, c1);
-                img.blend_pixel(x0 - x + 1, y0 + y, c2);
+                blend_pixel(img, x0 - x, y0 + y, c1);
+                blend_pixel(img, x0 - x + 1, y0 + y, c2);
             }
 
             if inside_arc((-(x as f64), -(y as f64)), start, end) {
-                img.blend_pixel(x0 - x, y0 - y, c1);
-                img.blend_pixel(x0 - x + 1, y0 - y, c2);
+                blend_pixel(img, x0 - x, y0 - y, c1);
+                blend_pixel(img, x0 - x + 1, y0 - y, c2);
             }
 
             if inside_arc((-(y as f64), -(x as f64)), start, end) {
-                img.blend_pixel(x0 - y, y0 - x, c1);
-                img.blend_pixel(x0 - y, y0 - x + 1, c2);
+                blend_pixel(img, x0 - y, y0 - x, c1);
+                blend_pixel(img, x0 - y, y0 - x + 1, c2);
             }
 
             if inside_arc((y as f64, -(x as f64)), start, end) {
-                img.blend_pixel(x0 + y, y0 - x, c1);
-                img.blend_pixel(x0 + y, y0 - x + 1, c2);
+                blend_pixel(img, x0 + y, y0 - x, c1);
+                blend_pixel(img, x0 + y, y0 - x + 1, c2);
             }
 
             if inside_arc((x as f64, -(y as f64)), start, end) {
-                img.blend_pixel(x0 + x, y0 - y, c1);
-                img.blend_pixel(x0 + x - 1, y0 - y, c2);
+                blend_pixel(img, x0 + x, y0 - y, c1);
+                blend_pixel(img, x0 + x - 1, y0 - y, c2);
             }
 
             if x0 >= x {
@@ -482,7 +487,7 @@ impl Renderer for AntiAliasingRender<RgbaImage> {
             }
         }
 
-        img.blend_pixel(x0, y0, color);
+        blend_pixel(img, x0, y0, color);
     }
 
     fn draw_rounded_rect(
